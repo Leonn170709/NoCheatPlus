@@ -37,13 +37,11 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
@@ -220,16 +218,6 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         api.addComponent(vehicleChecks);
         blockChangeTracker = NCPAPIProvider.getNoCheatPlusAPI().getBlockChangeTracker();
         registerLungeEvent(api);
-        if (Bridge1_9.hasEntityToggleGlideEvent()) {
-            queuedComponents.add(new Listener() {
-                @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-                public void onEntityToggleGlide(final EntityToggleGlideEvent event) {
-                    if (handleEntityToggleGlideEvent(event.getEntity(), event.isGliding())) {
-                        event.setCancelled(true);
-                    }
-                }
-            });
-        }
 
         // Register config and data.
         // TODO: Should register before creating Check instances ?
@@ -341,36 +329,6 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
             debug(player, "Lunge impulse: " + horizontalVelocity + " (power " + power + ")");
         }
     }
-
-    /**
-     * 
-     * @param entity
-     * @param isGliding
-     * @return True, if the event is to be cancelled.
-     */
-    private boolean handleEntityToggleGlideEvent(final Entity entity, final boolean isGliding) {
-
-        // Ignore non players.
-        if (!(entity instanceof Player)) {
-            return false;
-        }
-        final Player player = (Player) entity;
-        if (isGliding && !Bridge1_9.isGlidingWithElytra(player)) { // Includes check for elytra item.
-            final PlayerMoveInfo info = aux.usePlayerMoveInfo();
-            info.set(player, player.getLocation(info.useLoc), null, 0.001); // Only restrict very near ground.
-            final IPlayerData pData = DataManager.getPlayerData(player);
-            final MovingData data = pData.getGenericInstance(MovingData.class);
-            final boolean res = !MovingUtil.canLiftOffWithElytra(player, info.from, data);
-            info.cleanup();
-            aux.returnPlayerMoveInfo(info);
-            if (res && pData.isDebugActive(checkType)) {
-                debug(player, "Prevent toggle glide on.");
-            }
-            return res;
-        }
-        return false;
-    }
-
 
     /**
      * We listen to this event to prevent player from flying by sending bed leaving packets.

@@ -294,10 +294,8 @@ public class MovingUtil {
         // Check start glide conditions.
         final PlayerMoveData firstPastMove = data.playerMoves.getFirstPastMove();
         if (
-                // Skip lift-off conditions if the EntityToggleGlideEvent is present (checked there).
-                !Bridge1_9.hasEntityToggleGlideEvent()
-                // Otherwise only treat as lift-off, if not already gliding.
-                && !firstPastMove.toIsValid || firstPastMove.modelFlying == null 
+                // Treat as lift-off, if not already gliding. Toggling glide isn't cancelled: the client glides anyway and would desync.
+                !firstPastMove.toIsValid || firstPastMove.modelFlying == null 
                 || !MovingConfig.ID_JETPACK_ELYTRA.equals(firstPastMove.modelFlying.getId())) {
             // Treat as a lift off.
             // TODO: Past map states might allow lift off (...).

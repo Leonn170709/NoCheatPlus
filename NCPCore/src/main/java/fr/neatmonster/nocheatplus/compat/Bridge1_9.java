@@ -38,7 +38,6 @@ public class Bridge1_9 {
     private static final boolean hasGetItemInMainHand = ReflectionUtil.getMethodNoArgs(PlayerInventory.class, "getItemInMainHand", ItemStack.class) != null;
 
     private static final boolean hasIsGliding = ReflectionUtil.getMethodNoArgs(LivingEntity.class, "isGliding", boolean.class) != null;
-    private static final boolean hasEntityToggleGlideEvent = ReflectionUtil.getClass("org.bukkit.event.entity.EntityToggleGlideEvent") != null;
 
     public static boolean hasLevitation() {
         return LEVITATION != null;
@@ -66,10 +65,6 @@ public class Bridge1_9 {
 
     public static boolean hasIsGliding() {
         return hasIsGliding;
-    }
-
-    public static boolean hasEntityToggleGlideEvent() {
-        return hasEntityToggleGlideEvent;
     }
 
     /**
