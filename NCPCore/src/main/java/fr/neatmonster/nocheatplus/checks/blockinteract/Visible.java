@@ -33,6 +33,13 @@ import fr.neatmonster.nocheatplus.utilities.map.BlockCache;
  */
 public class Visible extends Check {
 
+    /**
+     * Also trace to the 27 sample points of the block when the line to the clicked (or looked at) point is blocked.
+     * Off: the clicked point is exact and the samples cost 27 more lines for every click through a wall. Turn on if
+     * legit clicks get cancelled (eye position or rotation a tick behind the client).
+     */
+    private static final boolean SAMPLE_FALLBACK = false;
+
     public Visible() {
         super(CheckType.BLOCKINTERACT_VISIBLE);
     }
@@ -63,10 +70,15 @@ public class Visible extends Check {
             // Left clicks come without one, there the look direction gives the point.
             final Vector point = clicked != null ? clicked
                     : CollisionUtil.getLookPoint(eyeX, eyeY, eyeZ, loc.getDirection(), blockX, blockY, blockZ);
-            visible = point != null && CollisionUtil.canSeeBlockPoint(blockCache, eyeX, eyeY, eyeZ,
-                    blockX, blockY, blockZ, point.getX(), point.getY(), point.getZ())
-                    || CollisionUtil.canSeeBox(blockCache, eyeX, eyeY, eyeZ,
-                    blockX, blockY, blockZ, blockX + 1, blockY + 1, blockZ + 1, blockX, blockY, blockZ);
+            final boolean pointVisible = point != null && CollisionUtil.canSeeBlockPoint(blockCache, eyeX, eyeY, eyeZ,
+                    blockX, blockY, blockZ, point.getX(), point.getY(), point.getZ());
+            if (!pointVisible && SAMPLE_FALLBACK) {
+                visible = CollisionUtil.canSeeBox(blockCache, eyeX, eyeY, eyeZ,
+                        blockX, blockY, blockZ, blockX + 1, blockY + 1, blockZ + 1, blockX, blockY, blockZ);
+            }
+            else {
+                visible = pointVisible;
+            }
             blockCache.cleanup();
         }
         if (pData.isDebugActive(type)) {
