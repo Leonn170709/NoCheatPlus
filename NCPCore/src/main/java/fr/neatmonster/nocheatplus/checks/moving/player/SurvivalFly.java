@@ -1663,6 +1663,12 @@ public class SurvivalFly extends Check {
                 } // TODO: Needs more precise confinement + setting set back or distance to ground or estYDist.
                 strictVdistRel = false;
             }
+            // First move after a set back/teleport (confirmed by the data reset move): velocity is 0 and gravity applies after moving,
+            // so the client stays at the same height once. Flagging it would set back again forever, freezing the player in air.
+            else if (yDistance == 0.0 && lastMove.yDistance == 0.0 && !data.playerMoves.getSecondPastMove().toIsValid) {
+                vAllowedDistance = 0.0;
+                strictVdistRel = false;
+            }
             else {
                 // Friction.
                 vAllowedDistance = lastMove.yDistance * data.lastFrictionVertical - Magic.GRAVITY_ODD; // Upper bound.

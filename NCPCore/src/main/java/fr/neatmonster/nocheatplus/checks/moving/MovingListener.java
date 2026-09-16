@@ -1212,6 +1212,12 @@ catch (java.lang.Throwable thr) {}
         ////////////////////////////////////////////////////////////////////////
         // Run through the moving checks (Passable is checked above).         //
         ////////////////////////////////////////////////////////////////////////
+        // Falling with an elytra on (e.g. swapped in mid-air): SurvivalFly accepted from, so a violation
+        // on lift-off sets back there, not to where the fall started. Slower falling via set backs gains nothing over gliding.
+        if (newTo == null && lastMove.toIsValid && lastMove.flyCheck == CheckType.MOVING_SURVIVALFLY && Bridge1_9.isWearingElytra(player)) {
+            data.setSetBack(from);
+        }
+
         // 1: SurvivalFly first
         if (checkSf) {
             // 1.1: Prepare from, to, thisMove for full checking.
@@ -1689,6 +1695,7 @@ catch (java.lang.Throwable thr) {}
         final PlayerMoveData lastMove = data.playerMoves.getFirstPastMove();
         final double amount = guessVelocityAmount(player, data.playerMoves.getCurrentMove(), lastMove, data, cc);
         data.clearActiveHorVel(); // Clear active velocity due to adding actual speed here.
+        data.vDistAcc.clear(); // Accounting buckets stem from before flying, would compare against a stale fall speed.
         data.bunnyhopDelay = 0; // Remove bunny hop due to add velocity 
         if (amount > 0.0) data.addHorizontalVelocity(new AccountEntry(tick, amount, cc.velocityActivationCounter, MovingData.getHorVelValCount(amount)));
         data.addVerticalVelocity(new SimpleEntry(lastMove.yDistance, cc.velocityActivationCounter));
@@ -1704,7 +1711,12 @@ catch (java.lang.Throwable thr) {}
         // Default margin: Allow slightly less than the previous speed.
         final double defaultAmount = lastMove.hDistance * (1.0 + Magic.FRICTION_MEDIUM_AIR) / 2.0;
         // Test for exceptions.
-        if (Bridge1_9.isWearingElytra(player) && lastMove.modelFlying != null && lastMove.modelFlying.getId().equals(MovingConfig.ID_JETPACK_ELYTRA)) {
+        // Not demanding the elytra to be worn: swapping it for a chestplate mid-glide still does one last elytra move client side.
+        if (lastMove.modelFlying != null && lastMove.modelFlying.getId().equals(MovingConfig.ID_JETPACK_ELYTRA)) {
+            // Only carry elytra speed up to 70 bps (3.5 blocks per move), faster gets no velocity and is set back by SurvivalFly.
+            if (lastMove.hDistance > 3.5) {
+                return 0.0;
+            }
             // Still elytra move, not forcing CreativeFly check, just pass the res to velocity
             final double[] res = CreativeFly.guessElytraVelocityAmount(player, thisMove, lastMove, data);
             //data.addVerticalVelocity(new SimpleEntry(lastMove.yDistance < -0.1034 ? (lastMove.yDistance * Magic.FRICTION_MEDIUM_AIR + 0.1034) 
